@@ -57,6 +57,7 @@ def get_model(model_name="srresnet"):
 # SRResNet
 def get_srresnet_model(input_channel_num=3, feature_dim=64, resunit_num=16):
     def _residual_block(inputs):
+        # conv -> bn -> prelu -> conv -> bn -> sum(x, inputs)
         x = Conv2D(feature_dim, (3, 3), padding="same", kernel_initializer="he_normal")(inputs)
         x = BatchNormalization()(x)
         x = PReLU(shared_axes=[1, 2])(x)
@@ -66,6 +67,7 @@ def get_srresnet_model(input_channel_num=3, feature_dim=64, resunit_num=16):
 
         return m
 
+    # inputs -> conv -> prelu -> residual blocks -> conv -> bn -> add -> conv
     inputs = Input(shape=(None, None, input_channel_num))
     x = Conv2D(feature_dim, (3, 3), padding="same", kernel_initializer="he_normal")(inputs)
     x = PReLU(shared_axes=[1, 2])(x)
