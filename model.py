@@ -13,6 +13,7 @@ class L0Loss:
 
     def __call__(self):
         def calc_loss(y_true, y_pred):
+            # L0 loss : (|f(x) - y| + epsilon) ^ gamma
             loss = K.pow(K.abs(y_true - y_pred) + 1e-8, self.gamma)
             return loss
         return calc_loss
@@ -26,6 +27,7 @@ class UpdateAnnealingParameter(Callback):
         self.verbose = verbose
 
     def on_epoch_begin(self, epoch, logs=None):
+        # anneal from 2 to 0
         new_gamma = 2.0 * (self.nb_epochs - epoch) / self.nb_epochs
         K.set_value(self.gamma, new_gamma)
 
@@ -34,6 +36,7 @@ class UpdateAnnealingParameter(Callback):
 
 
 def tf_log10(x):
+    # change of base
     numerator = tf.log(x)
     denominator = tf.log(tf.constant(10, dtype=numerator.dtype))
     return numerator / denominator

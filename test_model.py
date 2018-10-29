@@ -40,6 +40,7 @@ def main():
         output_dir = Path(args.output_dir)
         output_dir.mkdir(parents=True, exist_ok=True)
 
+    # list all images
     image_paths = list(Path(image_dir).glob("*.*"))
 
     for image_path in image_paths:
@@ -52,11 +53,13 @@ def main():
         noise_image = val_noise_model(image)
         pred = model.predict(np.expand_dims(noise_image, 0))
         denoised_image = get_image(pred[0])
+        # stack orignal image, noise_image, denoised image together
         out_image[:, :w] = image
         out_image[:, w:w * 2] = noise_image
         out_image[:, w * 2:] = denoised_image
 
         if args.output_dir:
+            # -4 to exclude extension
             cv2.imwrite(str(output_dir.joinpath(image_path.name))[:-4] + ".png", out_image)
         else:
             cv2.imshow("result", out_image)

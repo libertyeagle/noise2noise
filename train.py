@@ -1,7 +1,7 @@
 import argparse
 import numpy as np
 from pathlib import Path
-from keras.callbacks import LearningRateScheduler, ModelCheckpoint
+from keras.callbacks import LearningRateScheduler, ModelCheckpoint, TensorBoard
 from keras.optimizers import Adam
 from model import get_model, PSNR, L0Loss, UpdateAnnealingParameter
 from generator import NoisyImageGenerator, ValGenerator
@@ -59,14 +59,22 @@ def get_args():
 
 def main():
     args = get_args()
+    # train image dir
     image_dir = args.image_dir
+    # test image dir
     test_dir = args.test_dir
+    # training image patch size
     image_size = args.image_size
+    # trining batch size
     batch_size = args.batch_size
+    # number of epochs
     nb_epochs = args.nb_epochs
+    # learning rate
     lr = args.lr
+    # steps per epoch
     steps = args.steps
     loss_type = args.loss
+    # checkpoints path
     output_path = Path(__file__).resolve().parent.joinpath(args.output_path)
     model = get_model(args.model)
     opt = Adam(lr=lr)
@@ -75,12 +83,14 @@ def main():
     if loss_type == "l0":
         l0 = L0Loss()
         callbacks.append(UpdateAnnealingParameter(l0.gamma, nb_epochs, verbose=1))
+        # loss_type is a function, i.e., calc_loss
         loss_type = l0()
 
     model.compile(optimizer=opt, loss=loss_type, metrics=[PSNR])
     source_noise_model = get_noise_model(args.source_noise_model)
     target_noise_model = get_noise_model(args.target_noise_model)
     val_noise_model = get_noise_model(args.val_noise_model)
+    # training set generator
     generator = NoisyImageGenerator(image_dir, source_noise_model, target_noise_model, batch_size=batch_size,
                                     image_size=image_size)
     val_generator = ValGenerator(test_dir, val_noise_model)
@@ -90,7 +100,14 @@ def main():
                                      monitor="val_PSNR",
                                      verbose=1,
                                      mode="max",
-                                     save_best_only=True))
+                                     save_best_only=True
+    ))
+    callbacks.append(TensorBoard(
+        log_dir="./tf-logs",
+        histogram_freq=0,
+        write_graph=True,
+        write_images=True
+    ))
 
     hist = model.fit_generator(generator=generator,
                                steps_per_epoch=steps,

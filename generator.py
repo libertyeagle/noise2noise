@@ -7,6 +7,7 @@ from keras.utils import Sequence
 
 class NoisyImageGenerator(Sequence):
     def __init__(self, image_dir, source_noise_model, target_noise_model, batch_size=32, image_size=64):
+        # get all jpg files
         self.image_paths = list(Path(image_dir).glob("*.jpg"))
         self.source_noise_model = source_noise_model
         self.target_noise_model = target_noise_model
@@ -31,6 +32,8 @@ class NoisyImageGenerator(Sequence):
 
             if h >= image_size and w >= image_size:
                 h, w, _ = image.shape
+                # random choice a crop
+                # if high is None (the default), then results are from [0, low).
                 i = np.random.randint(h - image_size + 1)
                 j = np.random.randint(w - image_size + 1)
                 clean_patch = image[i:i + image_size, j:j + image_size]
@@ -54,6 +57,7 @@ class ValGenerator(Sequence):
             h, w, _ = y.shape
             y = y[:(h // 16) * 16, :(w // 16) * 16]  # for stride (maximum 16)
             x = val_noise_model(y)
+            # one image a batch
             self.data.append([np.expand_dims(x, axis=0), np.expand_dims(y, axis=0)])
 
     def __len__(self):
